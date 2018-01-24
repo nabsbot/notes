@@ -1,0 +1,151 @@
+git clone https://github.com/dmcinnes/HTML5-Asteroids
+
+git log 
+git diff (note can use 1st 4 chars of commit id as a reference)
+git diff 1245 3334  (shows what changes must be made to 1245 to get to 3334 - diff old vs new )
+
+
+TERMINOLOGY
+-----------
+git config --global user.email nabsbot@gmail.com
+git config --global user.name "N A"
+
+repository - group of related files
+
+clone - takes a copy of a repository (url)
+
+log  - history of commits
+
+HEAD is what Git calls the commit you are currently on. You can "detach" the HEAD by switching to a previous commit
+
+checkout - restore all files to the point of an earlier commit
+
+git init (empty repository)
+
+git add (to staging)
+git reset 
+	no args: remove changes from staging from staging, leave working copy
+	--hard: discards any changes in staging and working (not reversible). 
+
+git status - shows working dir and staging status
+git commit -m "msg"
+	stand practice to make the message a command 'Add file ...'
+	c.f Commit message Style Guide.htm
+
+git diff 
+	no argumentes: compares working directory and staging area
+	--staged : staged vs latest commit in repository
+	
+
+Branches
+--------
+Branches are labels for commits.   
+master is the main branch by convention
+detached head = commit with no branch name
+if you check out a branch and the commit the branch label updates to the new commit and stays checked out.  
+The current last commit = the tip of a branch
+A single commit can have more than one branch label, but a commit only updates the branch that is checked out.
+
+in asteroids
+$ git clone https://github.com/udacity/asteroids.git 
+
+$ git branch easy-game # create branch
+$ git branch # list branches 
+$ git checkout easy-game
+$ git checkout -m easy-game easy-mode # rename
+$ git checkout coins
+$ git log --graph --oneline master coins # representation of master and coin commits as branches
+
+Concepts
+--------
+commits have parents
+log traces from child to parents until the intial commit and will only show the commits that are "reachable" from the commit/branch you are at.
+HEAD = current commit. If you check out a commit then the detached head is not reachable (it is not attached to any named branch) 
+
+git checkout -b new_branch # creates bew branch and checks it out.  
+
+Merge
+------
+git compares tips with the point where the branches diverged.  
+e.g when we merge coin branch into master branch, master will have a commit of all the changes to coins plus the commits that created them.  
+We can then delete the coin branch, since the coin commits are now reachable from branch.  
+If we deleted the coin branch before merging the coin commits would be lost (strictly speaking they become unreachable unless you know the commit id - eventual the garbage collector removes them).
+
+$ git gc # run garbage collection manually
+
+$ git checkout master
+
+$ git merge master coins
+
+log presents the commits in time stamp order, and if the log is based on merged branches the preceeding commit is not necessarily the parent
+
+$ git diff 40357 354d # diff to preceeding commit
+$ git show  40357  # diff to parent (ie changes submited in the commit)
+$ git branch -d coins
+
+note 
+git merge will also include the currently checked-out branch in the merged version. So if you have branch1 checked out, and you run git merge branch2 branch3, the merged version will combine branch1 as well as branch2 and branch3. That’s because the branch1 label will update after you make the merge commit, so it’s unlikely that you didn’t want the changes from branch1 included in the merge. For this reason, you should always checkout one of the two branches you’re planning on merging before doing the merge. Which one you should check out depends on which branch label you want to point to the new commit.
+
+Since the checked-out branch is always included in the merge, you may have guessed that when you are merging two branches, you don't need to specify both of them as arguments to git merge on the command line. If you want to merge branch2 into branch1, you can simply git checkout branch1 and then type git merge branch2.
+
+merge conflicts
+---------------
+e.g both version attempt to modify the same line(s) of the original.
+
+merge master to branch
+---------------------
+to include the latest official changes into your branch
+$ git merge master easy-mode # merge master to easy mode
+
+resovle conflicts 
+
+$ git add game.js
+
+$ git commit # commit resolution - this will complete the merge when all conflicts are resolved.
+
+$ git log -n 1 # show latest commti
+
+CRLF
+----
+CRLF LF confuses merge:
+
+git config --global core.autocrlf true
+https://help.github.com/articles/dealing-with-line-endings/#platform-all
+
+
+------
+GitHub - nabsbot@gmail.com 
+------
+syncing :  git hub sends and recieves git commits (working and staging areas on git hub are not accessible)
+
+creating a repository:
+
+you can't clone, instead create an empty remote repository 
+you can push or pull commit(s) to a remote repository
+typicall you push a branch and this will send all the commits reachable behind the tip (in fact git will not send commits that are already present)
+
+
+1. create a remote on github
+
+$ git remote add origin https://github.com/nabsbot/notes.git #  can be any name - this is the name within this repository used to refer to the remote - convention is to use 'origin' if you only have one remote.F
+$  git push -u origin master # to remote from local branch:   note if you have used passwd sync then you will need to supply username/pword first time
+
+$ git remote -v 
+
+
+
+
+Password Caching 
+----------------
+git config --global credential.helper osxkeychain
+password caching will let you type your password once and have it auto-filled on that computer in the future
+https://help.github.com/articles/caching-your-github-password-in-git/
+
+env
+---
+
+cf bash files: ~/.git-*
+
+$ git config --global push.default upstream
+
+$ git config --global merge.conflictstyle diff3 # show head (current commit in current branch), common ancesstor, and code being mergeed in 
