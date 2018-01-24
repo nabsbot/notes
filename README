@@ -133,6 +133,9 @@ $  git push -u origin master # to remote from local branch:   note if you have u
 $ git remote -v 
 
 
+when new files are added to the remote repository we need to pull in the changes.  E.g add a file via the website.
+
+$ git pull origin master
 
 
 Password Caching 
