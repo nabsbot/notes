@@ -113,7 +113,7 @@ CRLF
 ----
 CRLF LF confuses merge:
 
-git config --global core.autocrlf true
+$ git config --global core.autocrlf true
 https://help.github.com/articles/dealing-with-line-endings/#platform-all
 
 
@@ -167,9 +167,43 @@ clone
 
 
 
+working with remote repositories
+--------------------------------
+
+to make an existing branch track remote branch, you must say so explicity.
+$ git pull # can proide useful tips
+e.g 
+$  git branch --set-upstream-to=origin/master master
+$ git branch -u orign/master master  # eitehr command will cause local branch master to track upstream origin/master
+
+a short cut is:
+$ git push -u origin my_branch
+
+
+
+--
+
+$ git diff origin/master master
+
+$ git reset --hard origin/master - remove all local changes and reset to remote
+
+$ git push: move your changes to the remote (this might get rejected if there are already other changes on the remote)
+$ git pull: get the changes (if any) from the remote and merge them into your changes
+$ git pull --rebase: as above, but try to redo your commits on top of the remote changes
+
+
+env
+---
+
+cf bash files: ~/.git-*
+
+$ git config --global push.default upstream
+
+$ git config --global merge.conflictstyle diff3 # show head (current commit in current branch), common ancesstor, and code being mergeed in 
+
 Password Caching 
 ----------------
-git config --global credential.helper osxkeychain
+$ git config --global credential.helper osxkeychain
 password caching will let you type your password once and have it auto-filled on that computer in the future
 https://help.github.com/articles/caching-your-github-password-in-git/
 
@@ -243,16 +277,3 @@ passphrase :  generally refers to a secret used to protect an encryption key. Co
 The purpose of the passphrase is usually to encrypt the private key. This makes the key file by itself useless to an attacker. It is not uncommon for files to leak from backups or decommissioned hardware, and hackers commonly exfiltrate files from compromised systems.
 To use an encrypted key, the passphrase is also needed. In a way, they are two separate factors of authentication.
 
-working with remote repositories
---------------------------------
-git diff origin/master master
-
-
-env
----
-
-cf bash files: ~/.git-*
-
-$ git config --global push.default upstream
-
-$ git config --global merge.conflictstyle diff3 # show head (current commit in current branch), common ancesstor, and code being mergeed in 
