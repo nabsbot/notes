@@ -7,6 +7,10 @@ git diff 1245 3334  (shows what changes must be made to 1245 to get to 3334 - di
 
 TERMINOLOGY
 -----------
+GitHub uses the email address set in your local Git configuration to associate commits pushed from the command line with your GitHub account. This can be set globally or per repository
+Note: If your commits are linked to another user, that does not mean the user can access your repository.
+A user can only access a repository you own if you add them as a collaborator or add them to a team that has access to the repository.
+The author of a commit in git is just metadata. You can set it to whatever you want. This is a necessary feature for distributed workflows, or any kind of workflow where one person may be committing on another person's behalf.
 git config --global user.email nabsbot@gmail.com
 git config --global user.name "N A"
 
@@ -120,15 +124,23 @@ syncing :  git hub sends and recieves git commits (working and staging areas on 
 
 creating a repository:
 
-you can't clone, instead create an empty remote repository 
+you can't clone from github without an empty repository
 you can push or pull commit(s) to a remote repository
 typicall you push a branch and this will send all the commits reachable behind the tip (in fact git will not send commits that are already present)
 
 
 1. create a remote on github
 
-$ git remote add origin https://github.com/nabsbot/notes.git #  can be any name - this is the name within this repository used to refer to the remote - convention is to use 'origin' if you only have one remote.F
-$  git push -u origin master # to remote from local branch:   note if you have used passwd sync then you will need to supply username/pword first time
+from remote
+$ mkdir notes
+$ cd notes
+$ git init # initialize empty remote directory
+$ git pull origin master # pull remote to local branch:   note if you have used passwd sync then you will need to supply username/pword first time
+
+from existing
+$ git remote add origin https://github.com/nabsbot/notes.git #  https,: remote can be given any name - this is the name within this repository used to refer to the remote - convention is to use 'origin' if you only have one remote.F
+$ git remote add origin git@github.com:nabsbot/notes.git # ssh
+$ git push -u origin master # push existing to remote from local branch:   note if you have used passwd sync then you will need to supply username/pword first time
 
 $ git remote -v 
 
@@ -137,12 +149,104 @@ when new files are added to the remote repository we need to pull in the changes
 
 $ git pull origin master
 
+Forking
+-------
+take a copy on github without pulling it down to your repository.
+A fork is just a clone that github makes for you, but it maintains a link to the original and counts the number of forks made.
+
+process is 1. fork; 2 clone ; 
+https://github.com/LarryMad/recipes
+
+$ git clone https://github.com/nabsbot/recipes.git # this automacially creates a remote
+
+$ git remote -v
+
+add collaborator (allow them to push to your repository) in git hub
+
+clone
+
+
 
 Password Caching 
 ----------------
 git config --global credential.helper osxkeychain
 password caching will let you type your password once and have it auto-filled on that computer in the future
 https://help.github.com/articles/caching-your-github-password-in-git/
+
+ssh
+---
+to pull and push to different accounts you neeed two ssh keys
+
+That's because github.com distinguishes not by user, which is always just git, but by the ssh key you used to connect.
+
+$ ssh-keygen -t rsa -b 4096 -C "nabsbot@gmail.com" # do not overwrite current public key - rename as id_rsa_nabsbot
+then add the public key to your account
+
+$ eval "$(ssh-agent -s)" # for some reason this only starts when logging in on mac, use this when su-ing
+$ ssh-add ~/.ssh/id_rsa_nabsbot # adds this private key to the ssh security agent 
+
+$ ssh-keygen -p  # change passphrase
+
+add host (known_Hosts lets the client authenticate the server to check it is not connect to an impersonator)
+$ ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+$ ssh -T git@github.com # test the connection
+
+a config file is used to allow differnt keys from the same account
+the final entry tells osx to automatically add the private key to the ssh-agent and to store the passphrase in the keychain
+note the ssh-agent can cause issues as it will supply the key and ignore the identity file specified in the config:
+The IdentitiesOnly .ssh/config configuration keyword can be used to limit the keys that ssh offers to the remote sshd to just those specified via IdentityFile keywords (i.e. it will refuse to use any additional keys that happen to be loaded into an active ssh-agent).
+$ ssh -vT git@github.com
+
+------------------------------------
+Host github.com
+	HostName github.com
+	User git
+	IdentityFile ~/.ssh/id_rsa
+	IdentitiesOnly yes
+
+Host nabsbot.github.com
+	HostName github.com	
+	User git
+	IdentityFile ~/.ssh/id_rsa_nabsbot
+	IdentitiesOnly yes
+
+Host *
+ AddKeysToAgent yes
+ UseKeychain yes
+------------------------------------
+
+add the private key to the ssh-agent and to store the passphrase in the keychain
+$  eval "$(ssh-agent -s)"
+$ ssh-add -K ~/.ssh/id_rsa
+
+
+add the public key to your git hub account (settings)
+
+test the connection
+$ ssh -T git@github.com
+
+confirm the public key fingerprint 
+
+$ ssh-keygen -l -E md5 -f ~/.ssh/id_rsa.pub 
+$ssh-keygen -l -f ~/.ssh/id_rsa.pub
+
+
+git remote add : creates an alias for the repository
+$ git remote add origin git@nabsbot.github.com:nabsbot/recipies.git # identify as nasbot
+$ git remote add origin git@github.com:nabsbot/recipes.git # identify as default account
+
+finally you need to change .git/config with the correct author information
+notes
+-----
+passphrase :  generally refers to a secret used to protect an encryption key. Commonly, an actual encryption key is derived from the passphrase and used to encrypt the protected resource.
+The purpose of the passphrase is usually to encrypt the private key. This makes the key file by itself useless to an attacker. It is not uncommon for files to leak from backups or decommissioned hardware, and hackers commonly exfiltrate files from compromised systems.
+To use an encrypted key, the passphrase is also needed. In a way, they are two separate factors of authentication.
+
+working with remote repositories
+--------------------------------
+git diff origin/master master
+
 
 env
 ---
