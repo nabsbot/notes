@@ -11,6 +11,13 @@ GitHub uses the email address set in your local Git configuration to associate c
 Note: If your commits are linked to another user, that does not mean the user can access your repository.
 A user can only access a repository you own if you add them as a collaborator or add them to a team that has access to the repository.
 The author of a commit in git is just metadata. You can set it to whatever you want. This is a necessary feature for distributed workflows, or any kind of workflow where one person may be committing on another person's behalf.
+
+git manages four local areas:
+working directory
+staging area
+commit history for this local remote
+commit history for the remote (if set up)
+
 git config --global user.email nabsbot@gmail.com
 git config --global user.name "N A"
 
@@ -22,18 +29,18 @@ log  - history of commits
 
 HEAD is what Git calls the commit you are currently on. You can "detach" the HEAD by switching to a previous commit
 
-checkout - restore all files to the point of an earlier commit
+checkout - restore all files to the point of an earlier commit or switches to tip of a branch
 
 git init (empty repository)
 
-git add (to staging)
+git add (take a change from working and add it to staging)
 git reset 
 	no args: remove changes from staging from staging, leave working copy
 	--hard: discards any changes in staging and working (not reversible). 
 
 git status - shows working dir and staging status
-git commit -m "msg"
-	stand practice to make the message a command 'Add file ...'
+git commit -m "msg"  # create a commit and update the current branch to this commit.
+	standard practice to make the message a command 'Add file ...'
 	c.f Commit message Style Guide.htm
 
 git diff 
@@ -128,26 +135,111 @@ you can't clone from github without an empty repository
 you can push or pull commit(s) to a remote repository
 typicall you push a branch and this will send all the commits reachable behind the tip (in fact git will not send commits that are already present)
 
+working with remote repositories
+--------------------------------
+git log/status/diff work on local copies only.
+
 
 1. create a remote on github
 
-from remote
-$ mkdir notes
-$ cd notes
-$ git init # initialize empty remote directory
-$ git pull origin master # pull remote to local branch:   note if you have used passwd sync then you will need to supply username/pword first time
+from remote:
+$ git clone git@nabsbot.github.com:nabsbot/notes.git notes  
+make local repository notes based on remote.  
+...this will automatically create a remote named 'origin'
+... and a local branch called master.
+... it will also make a local copy of the last known position on remote.  Since you can have multiple remotes set up you the branch is known as origin/<branch>
+(or example, a repository with multiple remotes for working with several collaborators might have one remote per user)
+... it will also set up tracking of remote
 
-from existing
+ and now set upstream
+$ git branch --set-upstream-to origin/master # default config above
+
+from existing local repository:
 $ git remote add origin https://github.com/nabsbot/notes.git #  https,: remote can be given any name - this is the name within this repository used to refer to the remote - convention is to use 'origin' if you only have one remote.F
 $ git remote add origin git@github.com:nabsbot/notes.git # ssh
-$ git push -u origin master # push existing to remote from local branch:   note if you have used passwd sync then you will need to supply username/pword first time
+$ git push -u origin master # push existing to remote from local branch (-u forces the local branch to track remote)
 
-$ git remote -v 
-
+$ git remote -v  # show the alias(s) for remotes in this repository
+$ git remote show origin
 
 when new files are added to the remote repository we need to pull in the changes.  E.g add a file via the website.
 
 $ git pull origin master
+
+tracking
+--------
+to make an existing branch track remote branch, you must say so explicity.
+$ git pull # can proide useful tips
+e.g 
+$  git branch --set-upstream-to=origin/master master
+$ git branch -u orign/master master  # eitehr command will cause local branch master to track upstream origin/master
+
+a short cut is:
+$ git push -u origin my_branch
+
+
+
+pushing
+------
+https://help.github.com/articles/pushing-to-a-remote/
+
+git push origin master  # push local commits for master branch to remote specified by "origin"
+
+
+$ git diff origin/master master
+
+$ git reset --hard origin/master - remove all local changes and reset to remote
+
+$ git push: move your changes to the remote (this might get rejected if there are already other changes on the remote)
+$ git pull: get the changes (if any) from the remote and merge them into your changes
+$ git pull --rebase: as above, but try to redo your commits on top of the remote changes
+
+
+merging
+-------
+git stores local copies of all the remote branches as of the last pull/push request.
+when you make a commit on a local branch, but neither the local origin/master nor remote are updated until you push.  
+Simmilarly a pull updates local orign/master copy and local repository are updated.
+
+When there are changes pending at both remote and local we can update the local remote (origin/master) copy with 
+
+$ git fetch origin 
+... which leaves local repsitory unchanged -  you can now use
+
+$ git log master orign/master
+$ git diff master orign/master
+To compare with (local copy) of remote that was just fetched
+
+$ git merge master origin/master 
+$ git push origin/master
+
+$ git pull # is actually doing $ git fetch origin; git merge master origin/master;
+
+fast forward merges
+-------------------
+
+why do git pulls not always create merge commits?  this happens when we merge two commits where the target is an ancestor of the source
+  b  --->  a --- > new
+without fastforward the new commit would have both a and b as parents, so instead we simply relable a as b (which contains all of a's history).
+
+workflows - pull requests
+--------
+if we have a change we want feedback on:
+make a local branch and push to remote (does not impact master)
+github feature called pull request allows project owner to comment before a merge to master. It is called pull as we are asking the project owner to pull our changes into master.
+
+$ git branch newidea
+$ git checkout newidea
+$ git add . ; git commit .
+$ git push origin newidea
+
+on github checkout the branch and select pull request.  note if you forked the repository it will default to assuming you want to merge with the original base 
+ you an change this to your own fork in the uio
+
+the owner can comment or merge.  If there is a comflict the owner will ask the supplier to merge locally and resolve conflicts so we can review it.
+
+once merged the branch can be deleted
+
 
 Forking
 -------
@@ -163,35 +255,6 @@ $ git remote -v
 
 add collaborator (allow them to push to your repository) in git hub
 
-clone
-
-
-
-working with remote repositories
---------------------------------
-
-to make an existing branch track remote branch, you must say so explicity.
-$ git pull # can proide useful tips
-e.g 
-$  git branch --set-upstream-to=origin/master master
-$ git branch -u orign/master master  # eitehr command will cause local branch master to track upstream origin/master
-
-a short cut is:
-$ git push -u origin my_branch
-
-
-
---
-
-$ git diff origin/master master
-
-$ git reset --hard origin/master - remove all local changes and reset to remote
-
-$ git push: move your changes to the remote (this might get rejected if there are already other changes on the remote)
-$ git pull: get the changes (if any) from the remote and merge them into your changes
-$ git pull --rebase: as above, but try to redo your commits on top of the remote changes
-
-
 env
 ---
 
@@ -201,11 +264,12 @@ $ git config --global push.default upstream
 
 $ git config --global merge.conflictstyle diff3 # show head (current commit in current branch), common ancesstor, and code being mergeed in 
 
-Password Caching 
-----------------
+HTTPS connections - Password Caching 
+-----------------------
 $ git config --global credential.helper osxkeychain
 password caching will let you type your password once and have it auto-filled on that computer in the future
 https://help.github.com/articles/caching-your-github-password-in-git/
+$ if you turn on 2 factor you wil need a token.
 
 ssh
 ---
